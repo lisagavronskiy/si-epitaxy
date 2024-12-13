@@ -42,7 +42,7 @@ Contains input files and scripts used for simulations on a Linux cluster:
    - Results are extracted and visualized for interpretation.
 
 4. **Presentation**:
-   - The PowerPoint file (`si-epitaxy simulation analysis.pptx`) provides an overview of the project, including:
+   - The PowerPoint file (`si-epitaxy-presentation.pptx`) provides an overview of the project, including:
      - Motivation and introduction to silicon epitaxy.
      - Explanation of methodologies and tools.
      - Results, discussions, and challenges.
