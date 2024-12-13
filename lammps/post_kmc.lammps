@@ -1,0 +1,185 @@
+# ---------- Equilibration of Si --------------
+
+# INITIALIZATION
+dimension 3						# specifies that the simulation is three-dimensional.
+units metal					    # sets the units used throughout the simulation (distance in Angstroms, time in picoseconds).
+boundary p p p					# sets the boundary conditions for the simulation in the x, y, and z directions, respectively.
+atom_style atomic				# that atoms are treated as single entities without any associated bond, angle, or dihedral data.
+
+# ----------- Variable Definitions -----------
+# change this based on what file is being run
+variable filename string "si_64x64x64_5defectsperlayer/si_64x64x64_5defectsperlayer.data"
+
+# Equilbirium phase
+variable temp equal 293              # System temp in Kelvin
+variable atomrate equal 100          # Frequency of atom dumps for visualization (CHANGE AS NEEDED)
+variable time_step equal 0.005       # Timestep in picoseconds (CHANGE AS NEEDED, initially 0.001) --> make time step smaller to make it more accurate (but will take longer)
+variable time_eq equal 5000          # Timesteps for equilibration phase
+
+# Annealing phase
+variable tempstop equal 1000         # Temp of annealing
+variable time_annealing equal 5000   # Timesteps for annealing
+variable time_cooling equal 10000     # Timesteps for cooling back down from annealing
+
+# Damping times for the Nose-Hoover thermostat/barostat (based on recommendations)
+variable tdamp equal "v_time_step*100" 
+variable pdamp equal "v_time_step*1000" 
+
+timestep ${time_step}
+
+# ----------- Atomic Configuration ----------- 
+
+# Atom placement
+read_data ${filename}.data
+
+
+# ----------- Define Interatomic Potential -----------
+pair_style tersoff
+pair_coeff * * Si.tersoff Si
+
+mass 1 28.0855
+
+# ----------- Equilibration Phase -------------
+reset_timestep 0
+fix equilibration all npt temp ${temp} ${temp} ${tdamp} iso 1 1 ${pdamp} drag 0.2
+
+# Dump Atom Coordinates for Visualization 
+dump dump_eq all custom ${atomrate} ${filename}_equil.lammpstrj id type element x y z
+dump_modify dump_eq element Si
+
+# Define Thermodynamic Outputs
+# for units metal, pressure is in [bars] = 100 [kPa] = 1/10000 [GPa]
+# p2, p3, p4 are in GPa
+
+#variable eal equal "sten"
+variable eq1 equal "step"
+variable eq2 equal "pxx"
+variable eq3 equal "pyy"
+variable eq4 equal "pzz"
+variable eq5 equal "lx"
+variable eq6 equal "ly"
+variable eq7 equal "lz"
+variable eq8 equal "vol"
+variable eq9 equal "temp" 
+variable eq10 equal "etotal"
+
+thermo ${atomrate} # LAMMPS will print the thermodynamic data every 1000 timesteps
+thermo_style custom step pxx pyy pzz lx ly lz temp etotal
+
+fix data_equilibration all print ${atomrate} "${eq1} ${eq2} ${eq3} ${eq4} ${eq5} ${eq6} ${eq7} ${eq8} ${eq9} ${eq10}" file ${filename}_equil.dat screen no
+
+velocity all create ${temp}  42
+run ${time_eq}
+
+
+# Unfix all dumps
+unfix equilibration 
+unfix data_equilibration
+undump dump_eq
+
+# ---------- Annealing Phase ------------
+
+# Record the initial volume for subsequent calculations
+variable tmp equal "vol"
+variable Vo equal ${tmp}
+
+reset_timestep 0
+fix annealing all npt temp ${temp} ${tempstop} ${tdamp} iso 1 1 ${pdamp} drag 0.2
+
+# Dump Atom Coordinates for Visualization 
+dump dump_annealing all custom ${atomrate} ${filename}_annealing.lammpstrj id type element x y z
+dump_modify dump_annealing element Si
+
+#variable eal equal "sten"
+variable eq1 equal "step"
+variable eq2 equal "pxx"
+variable eq3 equal "pyy"
+variable eq4 equal "pzz"
+variable eq5 equal "lx"
+variable eq6 equal "ly"
+variable eq7 equal "lz"
+variable eq8 equal "vol"
+variable eq9 equal "temp" 
+variable eq10 equal "etotal"
+
+thermo ${atomrate} # LAMMPS will print the thermodynamic data every 1000 timesteps
+thermo_style custom step pxx pyy pzz lx ly lz temp etotal
+
+fix data_annealing all print ${atomrate} "${eq1} ${eq2} ${eq3} ${eq4} ${eq5} ${eq6} ${eq7} ${eq8} ${eq9} ${eq10}" file ${filename}_annealing.dat screen no
+
+run ${time_annealing}
+
+# Unfix all dumps
+unfix annealing 
+unfix data_annealing
+undump dump_annealing
+
+# ---------- Cooling Phase ------------
+
+reset_timestep 0
+fix cooling all npt temp ${tempstop} ${temp} ${tdamp} iso 1 1 ${pdamp} drag 0.2
+
+# Dump Atom Coordinates for Visualization 
+dump dump_cooling all custom ${atomrate} ${filename}_cooling.lammpstrj id type element x y z
+dump_modify dump_cooling element Si
+
+#variable eal equal "sten"
+variable eq1 equal "step"
+variable eq2 equal "pxx"
+variable eq3 equal "pyy"
+variable eq4 equal "pzz"
+variable eq5 equal "lx"
+variable eq6 equal "ly"
+variable eq7 equal "lz"
+variable eq8 equal "vol"
+variable eq9 equal "temp" 
+variable eq10 equal "etotal"
+
+thermo ${atomrate} # LAMMPS will print the thermodynamic data every 1000 timesteps
+thermo_style custom step pxx pyy pzz lx ly lz temp etotal
+
+fix data_cooling all print ${atomrate} "${eq1} ${eq2} ${eq3} ${eq4} ${eq5} ${eq6} ${eq7} ${eq8} ${eq9} ${eq10}" file ${filename}_cooling.dat screen no
+
+run ${time_cooling}
+
+# Unfix all dumps
+unfix cooling 
+unfix data_cooling
+undump dump_cooling
+
+# ----------- Equilibration Phase  2-------------
+reset_timestep 0
+fix equilibration2 all npt temp ${temp} ${temp} ${tdamp} iso 1 1 ${pdamp} drag 0.2
+
+# Dump Atom Coordinates for Visualization 
+dump dump_eq2 all custom ${atomrate} ${filename}_equil_pass2.lammpstrj id type element x y z
+dump_modify dump_eq2 element Si
+
+# Define Thermodynamic Outputs
+# for units metal, pressure is in [bars] = 100 [kPa] = 1/10000 [GPa]
+# p2, p3, p4 are in GPa
+
+#variable eal equal "sten"
+variable eq1 equal "step"
+variable eq2 equal "pxx"
+variable eq3 equal "pyy"
+variable eq4 equal "pzz"
+variable eq5 equal "lx"
+variable eq6 equal "ly"
+variable eq7 equal "lz"
+variable eq8 equal "vol"
+variable eq9 equal "temp" 
+variable eq10 equal "etotal"
+
+thermo ${atomrate} # LAMMPS will print the thermodynamic data every 1000 timesteps
+thermo_style custom step pxx pyy pzz lx ly lz temp etotal
+
+fix data_equilibration2 all print ${atomrate} "${eq1} ${eq2} ${eq3} ${eq4} ${eq5} ${eq6} ${eq7} ${eq8} ${eq9} ${eq10}" file ${filename}_equil_pass2.dat screen no
+
+run ${time_eq}
+
+
+# Unfix all dumps
+unfix equilibration2 
+unfix data_equilibration2
+undump dump_eq2

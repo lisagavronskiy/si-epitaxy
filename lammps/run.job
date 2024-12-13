@@ -1,0 +1,8 @@
+#!/bin/bash
+#SBATCH --job-name=lammp5defects
+#SBATCH --time=0-06:00 # Max time (DD-HH:MM)
+#SBATCH --cpus-per-task=1 # Number of CPUs
+#SBATCH --mem=4G # Memory
+
+module load myclass/2024.05.31
+lmp < post_kmc.lammps
